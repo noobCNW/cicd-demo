@@ -1,0 +1,20 @@
+name: cicd-demo-pipeline
+stages:
+  - name: Build
+    jobs:
+      - name: build-and-test
+        image: node:20-alpine
+        steps:
+          - name: install-deps
+            run: npm install --omit=dev || true
+          - name: unit-test
+            run: npm test
+          - name: build
+            run: npm run build && ls -la dist && cat dist/BUILD_INFO
+          - name: docker-build
+            run: |
+              echo "Building image cicd-demo:${CI_COMMIT_SHA:-latest}"
+              # In runner without docker-in-docker, simulate artifact
+              tar -czf /tmp/cicd-demo.tgz dist package.json Dockerfile src
+              ls -lh /tmp/cicd-demo.tgz
+              echo "BUILD_SUCCESS"
