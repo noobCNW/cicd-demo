@@ -2,14 +2,22 @@ name: cicd-demo-pipeline
 stages:
   - name: Build
     jobs:
-      - name: build-and-test
+      - name: test
         image: node:20-alpine
         steps:
           - name: install-deps
             run: npm install
           - name: unit-test
             run: npm test
-          - name: build
-            run: npm run build && ls -la dist && cat dist/BUILD_INFO
-          - name: package-artifact
-            run: tar -czf /tmp/cicd-demo.tgz dist package.json Dockerfile src && ls -lh /tmp/cicd-demo.tgz && echo BUILD_SUCCESS
+          - name: build-app
+            run: npm run build && cat dist/BUILD_INFO
+      - name: docker-build
+        # 使用 docker CLI 镜像，通过 DinD (DOCKER_HOST) 构建镜像
+        image: docker:27-cli
+        steps:
+          - name: build-image
+            run: |
+              docker version
+              docker build -t cicd-demo:latest -t cicd-demo:${CI_COMMIT_SHA:-dev} .
+              docker images cicd-demo
+              echo DOCKER_BUILD_SUCCESS
