@@ -95,15 +95,34 @@ public class NacosConfigWatcher {
 
     @Scheduled(fixedDelay = 30_000)
     public void refresh() {
-        if (configService == null) {
-            return;
+        String content = null;
+        if (configService != null) {
+            try {
+                content = configService.getConfig(DATA_ID, group, 3000);
+            } catch (Exception e) {
+                log.warn("[nacos] refresh failed: {}", e.getMessage());
+            }
         }
+        if (content == null || content.isBlank()) {
+            // 回退读取平台挂载的配置文件（deploy/nacos/demo.yaml 经 Nacos 同步挂载到 /app/config）
+            content = readMountedFile("/app/config/" + DATA_ID);
+        }
+        apply(content);
+    }
+
+    /** 读取挂载目录下的 Nacos 配置文件（平台部署时由 ConfigMap 挂载）。 */
+    private String readMountedFile(String path) {
         try {
-            String content = configService.getConfig(DATA_ID, group, 3000);
-            apply(content);
+            java.nio.file.Path p = java.nio.file.Path.of(path);
+            if (java.nio.file.Files.exists(p)) {
+                String c = java.nio.file.Files.readString(p);
+                log.info("[nacos] read {} bytes from {}", c.length(), path);
+                return c;
+            }
         } catch (Exception e) {
-            log.warn("[nacos] refresh failed: {}", e.getMessage());
+            log.warn("[nacos] read mounted file {} failed: {}", path, e.getMessage());
         }
+        return null;
     }
 
     private void apply(String content) {

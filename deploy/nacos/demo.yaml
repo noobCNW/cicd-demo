@@ -1,0 +1,9 @@
+# Nacos 配置源文件（javademo 引用）
+# 通过 cicd-platform「环境 → Nacos 配置」发布到 Nacos（dataId=demo.yaml, group=DEFAULT_GROUP）
+# 应用启动后从 Nacos 拉取；Nacos 不可达时回退读取平台挂载的 /app/config/demo.yaml
+
+app.name: demo-java
+message: hello-from-nacos
+server.port: 8080
+feature.flag: enabled
+greeting: 你好，Nacos
