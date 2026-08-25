@@ -10,19 +10,13 @@ stages:
               echo "checkout ${CI_COMMIT_SHA:-HEAD}"
               pwd
               ls -la
-  - name: Build
+  - name: Package
     needs: [Checkout]
     jobs:
-      - name: maven-build
-        image: maven:3.9-eclipse-temurin-17
-        steps:
-          - name: compile
-            run: mvn -B -DskipTests package
-          - name: show-artifact
-            run: ls -lh target/javademo.jar
       - name: docker-build
-        needs: [maven-build]
-        # DinD：docker CLI 通过挂载的 docker.sock 在 DinD 内构建镜像
+        # DinD：docker CLI 通过挂载的 docker.sock 在 DinD 内构建镜像。
+        # Dockerfile 为多阶段（maven 编译 → JRE 运行），mvn package 在镜像构建内部完成；
+        # 各 job 独立 clone 工作区，产物不跨 job 共享，因此不在 pipeline 里单独跑 maven。
         image: docker:27-cli
         steps:
           - name: build-image

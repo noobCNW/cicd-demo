@@ -7,7 +7,7 @@ RUN mvn -B -q dependency:go-offline || true
 COPY src ./src
 RUN mvn -B -q -DskipTests package
 
-FROM eclipse-temurin:17-jre-alpine
+FROM eclipse-temurin:17-jre
 WORKDIR /app
 COPY --from=build /build/target/javademo.jar /app/app.jar
 EXPOSE 8080
