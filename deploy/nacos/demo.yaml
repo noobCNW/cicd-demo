@@ -3,7 +3,7 @@
 # 应用启动后从 Nacos 拉取；Nacos 不可达时回退读取平台挂载的 /app/config/demo.yaml
 
 app.name: demo-java
-message: hello-from-nacos
+message: hello-from-nacos-CHANGED
 server.port: 8080
 feature.flag: enabled
-greeting: 你好，Nacos
+greeting: 你好，Nacos（已更新）
