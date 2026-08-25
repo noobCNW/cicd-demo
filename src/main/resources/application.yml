@@ -1,0 +1,3 @@
+# 服务端口（平台部署时 containerPort 使用；Nacos 配置里的 server.port 仅作展示）
+server.port: 8080
+spring.application.name: javademo

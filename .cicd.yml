@@ -1,23 +1,33 @@
 name: cicd-demo-pipeline
 stages:
-  - name: Build
+  - name: Checkout
     jobs:
-      - name: test
-        image: node:20-alpine
+      - name: checkout
+        image: alpine:3.19
         steps:
-          - name: install-deps
-            run: npm install
-          - name: unit-test
-            run: npm test
-          - name: build-app
-            run: npm run build && cat dist/BUILD_INFO
+          - name: verify-workspace
+            run: |
+              echo "checkout ${CI_COMMIT_SHA:-HEAD}"
+              pwd
+              ls -la
+  - name: Build
+    needs: [Checkout]
+    jobs:
+      - name: maven-build
+        image: maven:3.9-eclipse-temurin-17
+        steps:
+          - name: compile
+            run: mvn -B -DskipTests package
+          - name: show-artifact
+            run: ls -lh target/javademo.jar
       - name: docker-build
+        needs: [maven-build]
         # DinD：docker CLI 通过挂载的 docker.sock 在 DinD 内构建镜像
         image: docker:27-cli
         steps:
-          - name: docker-version
-            run: docker version
           - name: build-image
-            run: docker build -t cicd-demo:latest -t cicd-demo:${CI_COMMIT_SHA:-dev} .
+            run: |
+              TAG="${CI_COMMIT_SHA:-latest}"
+              docker build -t "$CI_IMAGE" -t "app:${TAG}" .
           - name: list-images
-            run: docker images cicd-demo && echo DOCKER_BUILD_SUCCESS
+            run: docker images "$CI_IMAGE" && echo DOCKER_BUILD_SUCCESS
