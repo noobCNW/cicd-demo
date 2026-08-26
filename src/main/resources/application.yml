@@ -1,3 +1,5 @@
 # 服务端口（平台部署时 containerPort 使用；Nacos 配置里的 server.port 仅作展示）
 server.port: 8080
 spring.application.name: javademo
+# 关闭启动横幅，保证容器 stdout 全部为 JSON 行（契约 logging-collection-impl.md §6）
+spring.main.banner-mode: off

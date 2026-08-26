@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  JSON 行日志规范输出（契约 docs/development/logging-collection-impl.md §6）。
+
+  行为约定：
+  - 默认（本地直跑 / 容器生产，未激活 dev profile）：
+    LogstashEncoder 输出单行 JSON 到 stdout，字段为
+      {"ts":"<ISO8601 UTC 毫秒>","level":"INFO","logger":"<fqcn>","msg":"<消息正文>","service":"java-demo"}
+    异常堆栈内联为 stack_trace 字段（换行转义为 \n，保持单行 JSON），service 为常量 java-demo。
+  - dev profile（本地调试：环境变量 SPRING_PROFILES_ACTIVE=dev，或命令行参数 spring.profiles.active=dev）：
+    保留人类可读的 console pattern，便于本地开发调试。
+-->
+<configuration>
+
+  <!-- 本地调试：人类可读格式 -->
+  <springProfile name="dev">
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+      <encoder>
+        <pattern>%d{yyyy-MM-dd'T'HH:mm:ss.SSSXXX} %-5level [%thread] %logger{36} - %msg%n</pattern>
+        <charset>UTF-8</charset>
+      </encoder>
+    </appender>
+
+    <root level="INFO">
+      <appender-ref ref="CONSOLE"/>
+    </root>
+  </springProfile>
+
+  <!-- 默认 / 生产（容器）：单行 JSON 输出 -->
+  <springProfile name="!dev">
+    <appender name="JSON_CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+      <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+        <!-- ts：ISO8601 UTC，毫秒 + 'Z'（timeZone 固定 UTC） -->
+        <timestampPattern>yyyy-MM-dd'T'HH:mm:ss.SSSXXX</timestampPattern>
+        <timeZone>UTC</timeZone>
+        <!-- service 常量 -->
+        <customFields>{"service":"java-demo"}</customFields>
+        <!-- 字段映射：ts / msg / logger / level；[ignore] 表示省略该字段 -->
+        <fieldNames>
+          <timestamp>ts</timestamp>
+          <version>[ignore]</version>
+          <message>msg</message>
+          <logger>logger</logger>
+          <thread>[ignore]</thread>
+          <level>level</level>
+          <levelValue>[ignore]</levelValue>
+        </fieldNames>
+        <includeMdc>false</includeMdc>
+        <includeContext>false</includeContext>
+        <includeCallerData>false</includeCallerData>
+      </encoder>
+    </appender>
+
+    <root level="INFO">
+      <appender-ref ref="JSON_CONSOLE"/>
+    </root>
+  </springProfile>
+
+</configuration>
